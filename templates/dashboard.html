@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2>Welcome, {{ username }}!</h2>
+{% if is_guest %}
+<p>You are logged in as a guest.</p>
+<!-- Include game.html for guests -->
+{% include "game.html" %}
+{% else %}
+<p>You are logged in as a registered user.</p>
+<!-- Include game.html for logged-in users -->
+{% include "game.html" %}
+{% endif %}
+
+<a href="/logout">Logout</a>
+{% endblock %}

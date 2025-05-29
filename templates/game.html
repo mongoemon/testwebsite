@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Counter Game</title>
+    <link rel="stylesheet" href="/static/css/game.css">
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <h1>Click The Button!</h1>
+        
+        <div id="pre-game">
+            <button id="start-button">Start Game</button>
+            <div id="countdown-timer"></div>
+        </div>
+        
+        <div id="game-area" class="hidden">
+            <div id="counter">Clicks: 0</div>
+            <div id="timer">Time left: 30s</div>
+            <div id="message"></div>
+            <button id="click-button" style="display: block; margin: 0 auto;">CLICK ME!</button>
+            <button id="reset-button">Play Again</button>
+            <button id="start-over-button">Start Over</button> <!-- New Start Over button -->
+        </div>
+        
+        <div id="scoreboard">
+            <h2>Scoreboard</h2>
+            <ul id="score-list"></ul>
+            <button id="reset-score-button">Reset Scoreboard</button>
+        </div>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('start-button');
+        const clickButton = document.getElementById('click-button');
+        const resetButton = document.getElementById('reset-button');
+        const resetScoreButton = document.getElementById('reset-score-button');
+        const counterDisplay = document.getElementById('counter');
+        const timerDisplay = document.getElementById('timer');
+        const countdownTimer = document.getElementById('countdown-timer');
+        const messageDisplay = document.getElementById('message');
+        const preGame = document.getElementById('pre-game');
+        const gameArea = document.getElementById('game-area');
+        const scoreList = document.getElementById('score-list');
+        
+        let clickCount = 0;
+        let timeLeft = 30;
+        let timer;
+        let gameActive = false;
+        let scores = JSON.parse(localStorage.getItem('clickGameScores')) || [];
+        
+        // Display existing scores
+        updateScoreboard();
+        
+        // Initialize the game
+        function initGame() {
+            clickCount = 0;
+            timeLeft = 30;
+            gameActive = false;
+            
+            counterDisplay.textContent = `Clicks: ${clickCount}`;
+            timerDisplay.textContent = `Time left: ${timeLeft}s`;
+            messageDisplay.textContent = '';
+            
+            clickButton.style.display = 'block';
+            clickButton.disabled = true;
+            startOverButton.disabled = true;
+            resetButton.style.display = 'none';
+            
+            // Show countdown before game starts
+            startCountdown();
+        }
+        
+       // Countdown before game starts (3, 2, 1)
+       function startCountdown() {
+        // Create a popup element
+        const popup = document.createElement('div');
+        popup.id = 'countdown-popup';
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.backgroundColor = '#fff';
+        popup.style.border = '2px solid #333';
+        popup.style.borderRadius = '10px';
+        popup.style.padding = '20px';
+        popup.style.textAlign = 'center';
+        popup.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+        popup.style.zIndex = '1000';
+        popup.style.fontSize = '48px';
+        popup.style.fontWeight = 'bold';
+        popup.style.color = '#FF5722';
+
+        document.body.appendChild(popup);
+
+        let count = 3;
+        popup.textContent = `Starting in ${count}...`;
+
+        const countdownInterval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                popup.textContent = `Starting in ${count}...`;
+            } else {
+                clearInterval(countdownInterval);
+                popup.textContent = 'GO!';
+                setTimeout(() => {
+                    document.body.removeChild(popup); // Remove popup after countdown
+                    startGame();
+                }, 500);
+            }
+        }, 1000);
+    }
+        
+        // Start the actual game
+        function startGame() {
+            gameActive = true;
+            clickButton.disabled = false;
+            startOverButton.disabled = false;
+            
+            // Start the timer
+            clearInterval(timer);
+            timer = setInterval(updateTimer, 1000);
+        }
+        
+        // Update the timer
+        function updateTimer() {
+            timeLeft--;
+            timerDisplay.textContent = `Time left: ${timeLeft}s`;
+            
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+        
+        // End the game when time is up
+        function endGame() {
+            clearInterval(timer);
+            gameActive = false;
+            clickButton.disabled = true;
+            startOverButton.disabled = true;
+            messageDisplay.textContent = 'Time is up!';
+            resetButton.style.display = 'inline-block';
+            
+            // Save the score
+            saveScore(clickCount);
+        }
+        
+        // Save score to localStorage and update scoreboard
+        function saveScore(score) {
+            const now = new Date();
+            const timestamp = now.toLocaleString();
+            
+            scores.push({
+                round: scores.length + 1,
+                clicks: score,
+                date: timestamp
+            });
+            
+            localStorage.setItem('clickGameScores', JSON.stringify(scores));
+            updateScoreboard();
+        }
+        
+        // Update the scoreboard display
+        function updateScoreboard() {
+            scoreList.innerHTML = '';
+            
+            if (scores.length === 0) {
+                scoreList.innerHTML = '<li>No scores yet</li>';
+                return;
+            }
+            
+            scores.forEach(score => {
+                const li = document.createElement('li');
+                li.textContent = `Round ${score.round}: ${score.clicks} clicks (${score.date})`;
+                scoreList.appendChild(li);
+            });
+        }
+        
+        // Reset the scoreboard
+        function resetScoreboard() {
+            scores = [];
+            localStorage.removeItem('clickGameScores');
+            updateScoreboard();
+        }
+        
+        // Event listeners
+        startButton.addEventListener('click', function() {
+            preGame.classList.add('hidden');
+            gameArea.classList.remove('hidden');
+            initGame();
+        });
+        
+        clickButton.addEventListener('click', function() {
+            if (gameActive) {
+                clickCount++;
+                counterDisplay.textContent = `Clicks: ${clickCount}`;
+                
+                // Flash color on click (handled by CSS :active pseudo-class)
+            }
+        });
+        
+        resetButton.addEventListener('click', function() {
+            gameArea.classList.add('hidden');
+            preGame.classList.remove('hidden');
+        });
+        
+        resetScoreButton.addEventListener('click', resetScoreboard);
+
+
+
+        // Event listener for the "Start Over" button
+        const startOverButton = document.getElementById('start-over-button');
+
+        startOverButton.addEventListener('click', function () {
+            if (!gameActive) {
+                // Prevent clicking if the timer is not active
+                return;
+            }
+
+            // Reset game state
+            clickCount = 0;
+            timeLeft = 30;
+            gameActive = false;
+
+            // Clear the timer
+            clearInterval(timer);
+
+            // Update UI elements
+            counterDisplay.textContent = `Clicks: ${clickCount}`;
+            timerDisplay.textContent = `Time left: ${timeLeft}s`;
+            messageDisplay.textContent = '';
+
+            // Disable the click button and hide the reset button
+            clickButton.disabled = true;
+            resetButton.style.display = 'none';
+
+            // Show the pre-game area again
+            preGame.classList.remove('hidden');
+            gameArea.classList.add('hidden');
+        });
+
+    </script>
+</body>
+</html>

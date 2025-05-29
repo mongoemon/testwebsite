@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}My App{% endblock %}</title>
+</head>
+<body>
+    <!-- 🔝 Top Bar -->
+    <div style="background-color: #f0f0f0; padding: 10px; display: flex; justify-content: space-between;">
+        <div>
+            Logged in as: {{ session.username if session.username else "Anonymous" }}
+        </div>
+        {% if session.username %}
+        <div>
+            <form method="get" action="{{ url_for('logout') }}" style="display: inline;">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 🔽 Page Content -->
+    <div style="padding: 20px;">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
